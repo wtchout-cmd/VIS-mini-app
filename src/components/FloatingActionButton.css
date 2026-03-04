@@ -1,0 +1,65 @@
+.floating-action-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #4096ff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(64, 150, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+  color: #ffffff;
+}
+
+.floating-action-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 28px rgba(64, 150, 255, 0.6);
+  background: #5ba4ff;
+}
+
+.floating-action-button:active {
+  transform: scale(0.95);
+}
+
+.fab-icon {
+  transition: transform 0.2s;
+}
+
+.floating-action-button:hover .fab-icon {
+  transform: scale(1.1);
+}
+
+/* Ripple effect on click */
+.floating-action-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.floating-action-button:active::before {
+  width: 120%;
+  height: 120%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .floating-action-button {
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+  }
+}

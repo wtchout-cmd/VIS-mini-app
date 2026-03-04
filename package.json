@@ -1,0 +1,31 @@
+{
+  "name": "VIS-tms",
+  "version": "1.0.0",
+  "description": "Enterprise-grade Telegram Mini App for logistics transportation management",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && vercel --prod"
+  },
+  "dependencies": {
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^7.3.1"
+  },
+  "keywords": [
+    "telegram",
+    "mini-app",
+    "logistics",
+    "tms",
+    "transportation",
+    "fleet-management"
+  ],
+  "author": "VIS",
+  "license": "MIT"
+}
