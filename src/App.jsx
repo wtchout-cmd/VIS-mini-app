@@ -350,6 +350,7 @@ const LogisticsTMS = () => {
         onClose={() => setModal(false)}
         drivers={drivers}
         telegramUserId={userId}
+        dispatchUsername={username}
         clientPrefix={clientPrefix}
         onAssigned={() => {
           setTimeout(fetchAll, 2000); // refresh after assignment
