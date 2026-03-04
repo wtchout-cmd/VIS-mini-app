@@ -47,17 +47,27 @@ export const uploadRatecon = async (file, telegramUserId, clientPrefix = 'defaul
 
 /**
  * POST driver assignment — triggers the full completion chain:
- * send to driver group, update dashboard, save booked load.
+ * fetches load from Redis, sends to driver Telegram group, updates dashboard.
  * @param {object} payload
- * @param {string} payload.sessionKey   Redis key from uploadRatecon response
- * @param {string} payload.truckId      Truck ID from driver list
+ * @param {string}        payload.sessionKey    Redis key from uploadRatecon response
+ * @param {string}        payload.truckId       Truck ID from driver list
+ * @param {string}        payload.driverName    Full driver name for Telegram message
+ * @param {string|number} payload.driverChatId  Driver's personal Telegram chat ID (optional)
+ * @param {string|number} payload.groupChatId   Telegram group chat ID (e.g. -100xxxxxxxxxx)
  * @param {number|string} payload.telegramUserId
  */
-export const assignDriver = ({ sessionKey, truckId, telegramUserId }) =>
+export const assignDriver = ({ sessionKey, truckId, driverName, driverChatId, groupChatId, telegramUserId }) =>
   fetch(`${BASE}/webhook/web-assign-driver`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionKey, truckId, telegramUserId }),
+    body: JSON.stringify({
+      sessionKey,
+      truckId,
+      driverName,
+      driverChatId: driverChatId || null,
+      groupChatId,
+      telegramUserId,
+    }),
   }).then(handleResponse);
 
 /**
