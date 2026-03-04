@@ -6,7 +6,7 @@ import './RateconModal.css';
  * RateconModal — 5 states:
  *  upload → processing → review → driver-select → success
  */
-const RateconModal = ({ isOpen, onClose, drivers, telegramUserId, dispatchUsername, clientPrefix, onAssigned }) => {
+const RateconModal = ({ isOpen, onClose, drivers = [], telegramUserId, dispatchUsername, clientPrefix, onAssigned }) => {
   const [flow, setFlow] = useState('upload');
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -105,15 +105,15 @@ const RateconModal = ({ isOpen, onClose, drivers, telegramUserId, dispatchUserna
 
     try {
       await assignDriver({
-  sessionKey,
-  truckId:             driver.rawTruckId,
-  driverName:          driver.name,
-  driverChatId:        driver.telegramId || null,
-  groupChatId:         import.meta.env.VITE_DRIVER_GROUP_CHAT_ID,
-  telegramUserId,
-  driverCurrentStatus: driver.status,
-  dispatchUsername:    dispatchUsername || String(telegramUserId), // ← add this
-});
+        sessionKey,
+        truckId:             driver.rawTruckId,
+        driverName:          driver.name,
+        driverChatId:        driver.telegramId || null,
+        groupChatId:         import.meta.env.VITE_DRIVER_GROUP_CHAT_ID,
+        telegramUserId,
+        driverCurrentStatus: driver.status,
+        dispatchUsername:    dispatchUsername || String(telegramUserId),
+      });
 
       setFlow('success');
       onAssigned?.();
@@ -122,7 +122,7 @@ const RateconModal = ({ isOpen, onClose, drivers, telegramUserId, dispatchUserna
       setError('Failed to assign driver. ' + (err.message || ''));
       setAssigning(false);
     }
-  }, [sessionKey, telegramUserId, onAssigned]);
+  }, [sessionKey, telegramUserId, dispatchUsername, onAssigned]);
 
   // ── Filtered Drivers ─────────────────────────────────────────────────────
   const filteredDrivers = drivers.filter(d =>
