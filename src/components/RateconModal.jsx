@@ -106,7 +106,10 @@ const RateconModal = ({ isOpen, onClose, drivers = [], telegramUserId, clientPre
     try {
       await assignDriver({
         sessionKey,
-        truckId: driver.rawTruckId,
+        truckId:       driver.rawTruckId,
+        driverName:    driver.name,
+        driverChatId:  driver.telegramId || null,
+        groupChatId:   import.meta.env.VITE_DRIVER_GROUP_CHAT_ID,
         telegramUserId,
       });
 
@@ -313,7 +316,7 @@ const RateconModal = ({ isOpen, onClose, drivers = [], telegramUserId, clientPre
                   className="driver-item"
                   onClick={() => handleDriverSelect(driver)}
                 >
-                  <div className={`driver-avatar`} style={{ borderColor: driver.color, color: driver.color, background: `${driver.color}20` }}>
+                  <div className="driver-avatar" style={{ borderColor: driver.color, color: driver.color, background: `${driver.color}20` }}>
                     {driver.id}
                   </div>
                   <div className="driver-info">
