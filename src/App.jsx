@@ -48,16 +48,18 @@ const LogisticsTMS = () => {
       const { color, label } = resolveStatus(row.STATUS);
       const driverType = (row['Driver type'] || '').trim();
       return {
-        id: (row.Driver || 'DR').slice(0, 2).toUpperCase(),
-        name:       row.Driver       || 'Unknown',
+        id:         (row.Driver || 'DR').slice(0, 2).toUpperCase(),
+        name:       row.Driver          || 'Unknown',
         vehicle:    `${driverType || 'Truck'} #${row['Truck ID'] || 'N/A'}`,
-        location:   row['PU city']   || row['DEL city'] || '',
+        location:   row['PU city']      || row['DEL city'] || '',
         status:     label,
         color,
         speed:      label === 'Busy' ? `${row.speed || '—'} mph` : null,
-        idle:       row.notes || '',
+        idle:       row.notes           || '',
         driverType,
-        rawTruckId: row['Truck ID'] || '',
+        rawTruckId: row['Truck ID']     || '',
+        // ↓ Telegram ID from your Google Sheet column — used for group notification
+        telegramId: row['Telegram ID']  || row['telegram_id'] || row['TelegramID'] || null,
       };
     });
     setDrivers(mapped);
@@ -418,7 +420,6 @@ function buildAnalytics(drivers, loads) {
   const activeDrivers = drivers.filter(d => d.status === 'Busy' || d.status === 'Dispatched').length;
   const totalLoads = loads.length;
 
-  // Group revenue by driver
   const byDriver = {};
   loads.forEach(l => {
     if (!l.driver || l.driver === 'Unassigned') return;
