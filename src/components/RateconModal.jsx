@@ -105,13 +105,15 @@ const RateconModal = ({ isOpen, onClose, drivers, telegramUserId, dispatchUserna
 
     try {
       await assignDriver({
-        sessionKey,
-        truckId:       driver.rawTruckId,
-        driverName:    driver.name,
-        driverChatId:  driver.telegramId || null,
-        groupChatId:   import.meta.env.VITE_DRIVER_GROUP_CHAT_ID,
-        telegramUserId,
-      });
+  sessionKey,
+  truckId:             driver.rawTruckId,
+  driverName:          driver.name,
+  driverChatId:        driver.telegramId || null,
+  groupChatId:         import.meta.env.VITE_DRIVER_GROUP_CHAT_ID,
+  telegramUserId,
+  driverCurrentStatus: driver.status,
+  dispatchUsername:    dispatchUsername || String(telegramUserId), // ← add this
+});
 
       setFlow('success');
       onAssigned?.();
