@@ -6,7 +6,7 @@ import './RateconModal.css';
  * RateconModal — 5 states:
  *  upload → processing → review → driver-select → success
  */
-const RateconModal = ({ isOpen, onClose, drivers = [], telegramUserId, clientPrefix, onAssigned }) => {
+const RateconModal = ({ isOpen, onClose, drivers, telegramUserId, dispatchUsername, clientPrefix, onAssigned }) => {
   const [flow, setFlow] = useState('upload');
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
