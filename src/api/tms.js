@@ -29,9 +29,6 @@ export const getLoads = () =>
 /**
  * POST a rate confirmation PDF/image to n8n for AI extraction.
  * Returns extracted load data + a sessionKey (Redis key) for the next step.
- * @param {File} file
- * @param {number|string} telegramUserId
- * @param {string} clientPrefix  e.g. 'ClientA'
  */
 export const uploadRatecon = async (file, telegramUserId, clientPrefix = 'default') => {
   const formData = new FormData();
@@ -48,15 +45,17 @@ export const uploadRatecon = async (file, telegramUserId, clientPrefix = 'defaul
 /**
  * POST driver assignment — triggers the full completion chain:
  * fetches load from Redis, sends to driver Telegram group, updates dashboard.
- * @param {object} payload
- * @param {string}        payload.sessionKey    Redis key from uploadRatecon response
- * @param {string}        payload.truckId       Truck ID from driver list
- * @param {string}        payload.driverName    Full driver name for Telegram message
- * @param {string|number} payload.driverChatId  Driver's personal Telegram chat ID (optional)
- * @param {string|number} payload.groupChatId   Telegram group chat ID (e.g. -100xxxxxxxxxx)
- * @param {number|string} payload.telegramUserId
  */
-export const assignDriver = ({ sessionKey, truckId, driverName, driverChatId, groupChatId, telegramUserId }) =>
+export const assignDriver = ({
+  sessionKey,
+  truckId,
+  driverName,
+  driverChatId,
+  groupChatId,
+  telegramUserId,
+  driverCurrentStatus,
+  dispatchUsername,
+}) =>
   fetch(`${BASE}/webhook/web-assign-driver`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -64,11 +63,21 @@ export const assignDriver = ({ sessionKey, truckId, driverName, driverChatId, gr
       sessionKey,
       truckId,
       driverName,
-      driverChatId: driverChatId || null,
+      driverChatId:        driverChatId || null,
       groupChatId,
       telegramUserId,
+      driverCurrentStatus: driverCurrentStatus || 'READY',
+      dispatchUsername:    dispatchUsername || String(telegramUserId),
     }),
   }).then(handleResponse);
+
+/**
+ * GET live fleet locations from Redis (synced every 5 min from ELD stub).
+ */
+export const getFleetLocations = () =>
+  fetch(`${BASE}/webhook/get-fleet`, { headers: { 'Accept': 'application/json' } })
+    .then(handleResponse)
+    .catch(() => ({ trucks: [] }));
 
 /**
  * GET analytics computed from real sheet data.
@@ -77,4 +86,4 @@ export const assignDriver = ({ sessionKey, truckId, driverName, driverChatId, gr
 export const getAnalytics = () =>
   fetch(`${BASE}/webhook/get-analytics`, { headers: { 'Accept': 'application/json' } })
     .then(handleResponse)
-    .catch(() => null); // graceful fallback
+    .catch(() => null);
