@@ -1,89 +1,72 @@
 /**
- * VIS TMS — API Layer
- * All n8n webhook calls go through here.
- * Set VITE_N8N_BASE_URL in your .env file.
+ * tms.js — VIS TMS API Layer (frontend)
+ * Points to the Express/Supabase backend on Railway.
+ *
+ * .env vars needed:
+ *   VITE_API_BASE_URL   — https://your-app.up.railway.app
+ *   VITE_API_SECRET     — same value as API_SECRET in backend
  */
 
-const BASE = import.meta.env.VITE_N8N_BASE_URL || 'https://primary-production-c41f.up.railway.app';
+const BASE   = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const SECRET = import.meta.env.VITE_API_SECRET   || '';
 
-const handleResponse = async (res) => {
+const jsonHeaders = {
+  'Accept':        'application/json',
+  'Content-Type':  'application/json',
+  ...(SECRET ? { 'Authorization': `Bearer ${SECRET}` } : {}),
+};
+
+const readHeaders = {
+  'Accept': 'application/json',
+  ...(SECRET ? { 'Authorization': `Bearer ${SECRET}` } : {}),
+};
+
+const handle = async (res) => {
   const text = await res.text();
   if (!res.ok) throw new Error(`[${res.status}] ${text}`);
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
+  try { return JSON.parse(text); } catch { return { raw: text }; }
 };
 
-/** GET all drivers from the dashboard sheet */
-export const getDrivers = () =>
-  fetch(`${BASE}/webhook/get-drivers`, { headers: { 'Accept': 'application/json' } })
-    .then(handleResponse);
+// ── Read ──────────────────────────────────────────────────────────────────────
 
-/** GET all booked loads from the Booked Loads sheet */
-export const getLoads = () =>
-  fetch(`${BASE}/webhook/get-loads`, { headers: { 'Accept': 'application/json' } })
-    .then(handleResponse);
+export const getDrivers   = () => fetch(`${BASE}/webhook/get-drivers`,   { headers: readHeaders }).then(handle);
+export const getLoads     = () => fetch(`${BASE}/webhook/get-loads`,     { headers: readHeaders }).then(handle);
+export const getAnalytics = () => fetch(`${BASE}/webhook/get-analytics`, { headers: readHeaders }).then(handle).catch(() => null);
+export const getFleet     = () => fetch(`${BASE}/webhook/get-fleet`,     { headers: readHeaders }).then(handle).catch(() => ({ vehicles: [] }));
 
-/**
- * POST a rate confirmation PDF/image to n8n for AI extraction.
- * Returns extracted load data + a sessionKey (Redis key) for the next step.
- */
-export const uploadRatecon = async (file, telegramUserId, clientPrefix = 'default') => {
-  const formData = new FormData();
-  formData.append('data', file, file.name || 'ratecon.pdf');
-  formData.append('telegramUserId', String(telegramUserId));
-  formData.append('clientPrefix', clientPrefix);
+// ── Driver CRUD ───────────────────────────────────────────────────────────────
 
-  return fetch(`${BASE}/webhook/web-ratecon-upload`, {
-    method: 'POST',
-    body: formData,
-  }).then(handleResponse);
+export const createDriver = (data) =>
+  fetch(`${BASE}/drivers`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) }).then(handle);
+
+export const updateDriver = (truckId, data) =>
+  fetch(`${BASE}/drivers/${encodeURIComponent(truckId)}`, { method: 'PUT', headers: jsonHeaders, body: JSON.stringify(data) }).then(handle);
+
+export const updateDriverStatus = (truckId, status) =>
+  fetch(`${BASE}/drivers/${encodeURIComponent(truckId)}/status`, { method: 'PATCH', headers: jsonHeaders, body: JSON.stringify({ status }) }).then(handle);
+
+export const deleteDriver = (truckId) =>
+  fetch(`${BASE}/drivers/${encodeURIComponent(truckId)}`, { method: 'DELETE', headers: readHeaders }).then(handle);
+
+// ── Ratecon flow ──────────────────────────────────────────────────────────────
+
+export const uploadRatecon = (file, telegramUserId, clientPrefix = 'default') => {
+  const form = new FormData();
+  form.append('data', file, file.name || 'ratecon.pdf');
+  form.append('telegramUserId', String(telegramUserId));
+  form.append('clientPrefix', clientPrefix);
+  const headers = SECRET ? { 'Authorization': `Bearer ${SECRET}` } : {};
+  return fetch(`${BASE}/webhook/web-ratecon-upload`, { method: 'POST', headers, body: form }).then(handle);
 };
 
-/**
- * POST driver assignment — triggers the full completion chain:
- * fetches load from Redis, sends to driver Telegram group, updates dashboard.
- */
-export const assignDriver = ({
-  sessionKey,
-  truckId,
-  driverName,
-  driverChatId,
-  groupChatId,
-  telegramUserId,
-  driverCurrentStatus,
-  dispatchUsername,
-}) =>
+export const assignDriver = ({ sessionKey, truckId, telegramUserId }) =>
   fetch(`${BASE}/webhook/web-assign-driver`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionKey,
-      truckId,
-      driverName,
-      driverChatId:        driverChatId || null,
-      groupChatId,
-      telegramUserId,
-      driverCurrentStatus: driverCurrentStatus || 'READY',
-      dispatchUsername:    dispatchUsername || String(telegramUserId),
-    }),
-  }).then(handleResponse);
+    headers: jsonHeaders,
+    body: JSON.stringify({ sessionKey, truckId, telegramUserId }),
+  }).then(handle);
 
-/**
- * GET live fleet locations from Redis (synced every 5 min from ELD stub).
- */
-export const getFleetLocations = () =>
-  fetch(`${BASE}/webhook/get-fleet`, { headers: { 'Accept': 'application/json' } })
-    .then(handleResponse)
-    .catch(() => ({ trucks: [] }));
+// ── Admin ─────────────────────────────────────────────────────────────────────
 
-/**
- * GET analytics computed from real sheet data.
- * Optional — falls back to client-side calculation if endpoint doesn't exist.
- */
-export const getAnalytics = () =>
-  fetch(`${BASE}/webhook/get-analytics`, { headers: { 'Accept': 'application/json' } })
-    .then(handleResponse)
-    .catch(() => null);
+export const syncFromSheets = () =>
+  fetch(`${BASE}/admin/sync-from-sheets`, { method: 'POST', headers: jsonHeaders }).then(handle);
